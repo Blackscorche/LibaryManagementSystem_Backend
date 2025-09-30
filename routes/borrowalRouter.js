@@ -9,9 +9,9 @@ const {
     addBorrowal,
     updateBorrowal,
     deleteBorrowal
-} = require('../controllers/BorrowalController')
+} = require('../controllers/borrowalController')
 
-router.get("/getAll", (req, res) => getAllBorrowals(req,res))
+router.get("/getAll", (req, res) => getAllBorrowals(req, res))
 
 router.get("/get/:id", (req, res) => getBorrowal(req, res))
 
