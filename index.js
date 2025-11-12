@@ -44,8 +44,9 @@ mongoose.connect(process.env.MONGO_URI, {
 
 // Use CORS for Cross Origin Resource Sharing
 // Support multiple frontend URLs (comma-separated)
+// Normalize URLs by removing trailing slashes for consistent matching
 const frontendUrls = process.env.FRONTEND_URL 
-  ? process.env.FRONTEND_URL.split(',').map(url => url.trim())
+  ? process.env.FRONTEND_URL.split(',').map(url => url.trim().replace(/\/+$/, ''))
   : [];
 
 const allowedOrigins = [
@@ -65,24 +66,27 @@ app.use(cors({
       return callback(null, true);
     }
     
+    // Normalize origin by removing trailing slash
+    const normalizedOrigin = origin.replace(/\/+$/, '');
+    
     // In development, allow localhost
     if (process.env.NODE_ENV !== "production") {
-      if (origin.includes("localhost") || origin.includes("127.0.0.1")) {
+      if (normalizedOrigin.includes("localhost") || normalizedOrigin.includes("127.0.0.1")) {
         return callback(null, true);
       }
     }
     
-    // Check if origin is in allowed list
-    if (allowedOrigins.indexOf(origin) !== -1) {
+    // Check if normalized origin is in allowed list
+    if (allowedOrigins.indexOf(normalizedOrigin) !== -1) {
       return callback(null, true);
     }
     
     // Log rejected origins for debugging
-    console.warn('CORS: Origin not allowed:', origin);
+    console.warn('CORS: Origin not allowed:', normalizedOrigin);
     console.warn('CORS: Allowed origins:', allowedOrigins);
     
     // Return error with proper CORS headers
-    callback(new Error(`Not allowed by CORS. Origin: ${origin}`));
+    callback(new Error(`Not allowed by CORS. Origin: ${normalizedOrigin}`));
   },
   credentials: true,
   optionsSuccessStatus: 200 // Some legacy browsers (IE11, various SmartTVs) choke on 204
