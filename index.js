@@ -110,4 +110,23 @@ app.use("/api/review", reviewRouter);
 
 app.get('/', (req, res) => res.send('Welcome to Library Management System'));
 
+// Error handling middleware - must be after all routes
+app.use((err, req, res, next) => {
+  console.error('Error:', err);
+  
+  // Handle CORS errors
+  if (err.message === 'Not allowed by CORS') {
+    return res.status(403).json({ 
+      success: false, 
+      error: 'CORS policy violation' 
+    });
+  }
+  
+  // Handle other errors
+  res.status(err.status || 500).json({ 
+    success: false, 
+    error: err.message || 'Internal server error' 
+  });
+});
+
 app.listen(PORT, () => console.log(`Server listening on port ${PORT}!`));

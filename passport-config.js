@@ -18,9 +18,12 @@ const initializePassport = (passport) => {
     });
   };
   passport.use(new LocalStrategy({usernameField: "email"}, authenticateUser));
-  passport.serializeUser((user, done) => done(null, user));
-  passport.deserializeUser((user, done) => {
-    User.findById(user._id, (err, user) => {
+  passport.serializeUser((user, done) => {
+    // Only store user ID in session, not the entire user object
+    done(null, user._id || user.id);
+  });
+  passport.deserializeUser((id, done) => {
+    User.findById(id, (err, user) => {
       done(err, user);
     });
   });
