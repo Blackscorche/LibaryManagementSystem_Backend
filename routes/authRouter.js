@@ -9,10 +9,10 @@ const {
   logoutUser,
 } = require('../controllers/authController')
 
-router.post("/login", (req, res) => loginUser(req, res))
+router.post("/login", (req, res, next) => loginUser(req, res, next))
 
 router.post("/register", (req, res) => registerUser(req, res))
 
-router.get("/logout", (req, res) => logoutUser(req, res))
+router.get("/logout", (req, res, next) => logoutUser(req, res, next))
 
 module.exports = router;

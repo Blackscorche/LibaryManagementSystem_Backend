@@ -52,7 +52,15 @@ const registerUser = async (req, res) => {
 // Update user profile with new picture
 const updateUserProfile = async (req, res) => {
   try {
-    const userId = req.user.id; // Assuming you have user in req from auth middleware
+    // Authorization check: ensure user is authenticated
+    if (!req.user || !req.user.id) {
+      if (req.file) {
+        await cloudinary.uploader.destroy(req.file.filename);
+      }
+      return res.status(401).json({ success: false, message: "Unauthorized. Please log in." });
+    }
+
+    const userId = req.user.id;
     const updateData = { ...req.body };
 
     const user = await User.findById(userId);
@@ -104,6 +112,11 @@ const updateUserProfile = async (req, res) => {
 // Delete user profile picture
 const deleteProfilePicture = async (req, res) => {
   try {
+    // Authorization check: ensure user is authenticated
+    if (!req.user || !req.user.id) {
+      return res.status(401).json({ success: false, message: "Unauthorized. Please log in." });
+    }
+
     const userId = req.user.id;
     const user = await User.findById(userId);
 

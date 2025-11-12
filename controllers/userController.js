@@ -113,6 +113,27 @@ const updateUser = async (req, res) => {
     const userId = req.params.id;
     const updateData = { ...req.body };
 
+    // Authorization check: prevent user impersonation
+    if (!req.user) {
+      if (req.file) {
+        await cloudinary.uploader.destroy(req.file.filename);
+      }
+      return res.status(401).json({ success: false, message: "Unauthorized. Please log in." });
+    }
+
+    const authenticatedUserId = req.user.id || req.user._id?.toString();
+    
+    // Allow admins to update any user, but regular users can only update themselves
+    if (!req.user.isAdmin && userId !== authenticatedUserId) {
+      if (req.file) {
+        await cloudinary.uploader.destroy(req.file.filename);
+      }
+      return res.status(403).json({ 
+        success: false, 
+        message: "Forbidden. You can only update your own profile." 
+      });
+    }
+
     const user = await User.findById(userId);
     if (!user) {
       if (req.file) {
@@ -167,6 +188,21 @@ const updateUser = async (req, res) => {
 const deleteUser = async (req, res) => {
   try {
     const userId = req.params.id;
+
+    // Authorization check: prevent user impersonation
+    if (!req.user) {
+      return res.status(401).json({ success: false, message: "Unauthorized. Please log in." });
+    }
+
+    const authenticatedUserId = req.user.id || req.user._id?.toString();
+    
+    // Allow admins to delete any user, but regular users can only delete themselves
+    if (!req.user.isAdmin && userId !== authenticatedUserId) {
+      return res.status(403).json({ 
+        success: false, 
+        message: "Forbidden. You can only delete your own account." 
+      });
+    }
 
     const user = await User.findById(userId);
     if (!user) {
