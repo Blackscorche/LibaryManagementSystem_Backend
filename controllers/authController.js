@@ -149,6 +149,14 @@ const deleteProfilePicture = async (req, res) => {
 
 const loginUser = async (req, res, next) => {
   try {
+    // Validate request body
+    if (!req.body.email || !req.body.password) {
+      return res.status(400).json({ 
+        success: false, 
+        message: "Email and password are required" 
+      });
+    }
+
     const user = await User.findOne({ email: req.body.email });
 
     if (!user) {
@@ -169,33 +177,53 @@ const loginUser = async (req, res, next) => {
     passport.authenticate("local", (err, authenticatedUser, info) => {
       if (err) {
         console.error('Passport authentication error:', err);
-        return next(err);
+        return res.status(500).json({ 
+          success: false, 
+          error: "Authentication error occurred" 
+        });
       }
 
       if (!authenticatedUser) {
-        return res.status(401).json({ success: false, message: "Authentication failed" });
+        return res.status(401).json({ 
+          success: false, 
+          message: info?.message || "Authentication failed" 
+        });
       }
 
       req.logIn(authenticatedUser, (err) => {
         if (err) {
           console.error('Login error:', err);
-          return next(err);
+          return res.status(500).json({ 
+            success: false, 
+            error: "Failed to establish session" 
+          });
         }
 
-        const userResponse = authenticatedUser.toObject();
-        delete userResponse.hash;
-        delete userResponse.salt;
+        try {
+          const userResponse = authenticatedUser.toObject();
+          delete userResponse.hash;
+          delete userResponse.salt;
 
-        return res.status(200).json({
-          success: true,
-          user: userResponse
-        });
+          return res.status(200).json({
+            success: true,
+            user: userResponse
+          });
+        } catch (responseErr) {
+          console.error('Error preparing user response:', responseErr);
+          return res.status(500).json({ 
+            success: false, 
+            error: "Error preparing response" 
+          });
+        }
       });
     })(req, res, next);
 
   } catch (err) {
     console.error('Login error:', err);
-    return res.status(500).json({ success: false, error: err.message });
+    return res.status(500).json({ 
+      success: false, 
+      error: err.message || "Internal server error" 
+    });
   }
 };
 
